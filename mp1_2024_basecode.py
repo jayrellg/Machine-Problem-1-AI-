@@ -25,7 +25,7 @@ class MazeState():
 
     MAZE_FILE = 'maze2024.txt'
     maze = np.loadtxt(MAZE_FILE, dtype=np.int32)  
-    start = tuple(np.array(np.where(maze==5)).flatten())
+    start = tuple(np.array(np.where(maze==5)).flatten()) 
     ends = np.where(maze==2)
     move_num = 0 # Used by show_path() to count moves in the solution path
     
@@ -80,25 +80,56 @@ class MazeState():
     
     def get_new_pos(self, move):
         """ Returns a new position from the current position and the specified move """
-        if move=='up':
-            new_pos = (self.pos[0]-1, self.pos[1])
-        elif move=='down':
-            new_pos = (self.pos[0]+1, self.pos[1])
-        elif move=='left':
-            new_pos = (self.pos[0], self.pos[1]-1)
-        elif move=='right':
-            new_pos = (self.pos[0], self.pos[1]+1)
+        # if move=='up':
+        #     new_pos = (self.pos[0]-1, self.pos[1])
+        # elif move=='down':
+        #     new_pos = (self.pos[0]+1, self.pos[1])
+        # elif move=='left':
+        #     new_pos = (self.pos[0], self.pos[1]-1)
+        # elif move=='right':
+        #     new_pos = (self.pos[0], self.pos[1]+1)
+        # else:
+        #     raise('wrong direction for checking move')
+        # return new_pos
+
+        # NEW get_new_pos with wrap around logic
+        
+        #get and save the size of the maze into variables rows and columns
+        rows, cols = self.maze.shape
+
+        #Added arithmetic modulo expression to the rows and columns 
+        #Evaluating the selected index by the row/column modulo allows for wrap around moves 
+        if move == 'up':
+            # Moving up: If at the top row (index 0), wraps to the bottom row (index 'rows-1') 
+            # (Example: Assume the maze is of size 10 and the current state is at the top row, row index is decremented from 0 --> -1 , in python -1 % 10 = 9 ,
+            # thus wrapping around to the bottom of the maze
+            new_pos = ((self.pos[0] - 1) % rows, self.pos[1])
+        elif move == 'down':
+            # Moving down: If at the bottom row (index 'rows-1'), wraps to the top row (index 0)
+            new_pos = ((self.pos[0] + 1) % rows, self.pos[1])
+        elif move == 'left':
+            # Moving left: If at the first column (index 0), wraps to the last column (index 'cols-1')
+            new_pos = (self.pos[0], (self.pos[1] - 1) % cols)
+        elif move == 'right':
+            # Moving right: If at the last column (index 'cols-1'), wraps to the first column (index 0)
+            new_pos = (self.pos[0], (self.pos[1] + 1) % cols)
         else:
-            raise('wrong direction for checking move')
+            raise ValueError('Invalid direction')
+        
         return new_pos
+
         
     def can_move(self, move):
         """ Returns true if agent can move in the given direction """
+        # new_pos = self.get_new_pos(move)
+        # if new_pos[0] < 0 or new_pos[0] >= self.maze.shape[0] or new_pos[1] < 0 or new_pos[1] >= self.maze.shape[1]:
+        #     return False
+        # else:
+        #     return self.maze[new_pos]!=MazeState.WALL
+        
+        #new can_move logic for wrap arounds , no need to check for maze size as wrapping can occur , only checking if new potential state is a wall or not
         new_pos = self.get_new_pos(move)
-        if new_pos[0] < 0 or new_pos[0] >= self.maze.shape[0] or new_pos[1] < 0 or new_pos[1] >= self.maze.shape[1]:
-            return False
-        else:
-            return self.maze[new_pos]!=MazeState.WALL
+        return self.maze[new_pos] != MazeState.WALL
                     
     def gen_next_state(self, move):
         """ Generates a new MazeState object by taking move from current state """
@@ -110,7 +141,7 @@ class MazeState():
 # Display the heading info
 print('Artificial Intelligence')
 print('MP1: Robot navigation')
-print('SEMESTER: Spring 2024')
+print('SEMESTER: Spring 2025')
 print('NAME: [your name]')
 print()
 
@@ -152,10 +183,11 @@ while not frontier.empty():
                 continue
             if neighbor not in frontier.queue:                           
                 frontier.put(neighbor)
-            else:
-                if neighbor.gcost < frontier.queue[frontier.queue.index(neighbor)].gcost:
+            else: 
                     frontier.queue[frontier.queue.index(neighbor)] = neighbor
                     heapify(frontier.queue)
+                    #if neighbor is already in the frontier, checks if the current path to the neighbor has a lower cost.
+                    #if new path is cheaper, the state in the frontier is updated, and the priority queue is reheapified (heapify(frontier.queue)).
 
 print(start_state)                
 print('\nNumber of states visited =',num_states)
